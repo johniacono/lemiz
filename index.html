@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les Misérables</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 2'%3E%3Crect width='1' height='2' fill='%230055A4'/%3E%3Crect x='1' width='1' height='2' fill='%23fff'/%3E%3Crect x='2' width='1' height='2' fill='%23EF4135'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Les Misérables">
+<style>
+:root {
+  --bg: #f7f3ea; --paper: #fffdf8; --ink: #2a2622; --muted: #7a7064; --line: #e4dccd;
+  --accent: #8a3b2e; --accent-soft: #f3e3dc; --hl: #fbefc2; --hl-s: #f6ecd9; --ok: #3f7d4e;
+  --side: #efe9dc; --tr: #5a5348; --shadow: 0 6px 24px rgba(60, 40, 20, .12);
+  --fs: 20px; --maxw: 760px;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+:root[data-theme="dark"] {
+  --bg: #1b1a18; --paper: #22201d; --ink: #e8e2d6; --muted: #9c9385; --line: #3a3631;
+  --accent: #e0937f; --accent-soft: #3d2b26; --hl: #4a3f1c; --hl-s: #2f2b24; --ok: #7cc28d;
+  --side: #262420; --tr: #bfb6a6; --shadow: 0 6px 24px rgba(0, 0, 0, .5);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1a18; --paper: #22201d; --ink: #e8e2d6; --muted: #9c9385; --line: #3a3631;
+    --accent: #e0937f; --accent-soft: #3d2b26; --hl: #4a3f1c; --hl-s: #2f2b24; --ok: #7cc28d;
+    --side: #262420; --tr: #bfb6a6; --shadow: 0 6px 24px rgba(0, 0, 0, .5);
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+#app { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
+body.panel-open #app { grid-template-columns: 300px 1fr 380px; }
+
+/* ---------- Sidebar ---------- */
+#sidebar { background: var(--side); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+#sidebar header { padding: 18px 18px 12px; border-bottom: 1px solid var(--line); }
+#sidebar header { position: relative; }
+#hideSide { position: absolute; top: 14px; right: 12px; border: 1px solid var(--line); background: var(--paper); color: var(--muted); border-radius: 6px; padding: 2px 8px; font-size: 15px; line-height: 1.2; }
+#hideSide:hover { color: var(--accent); border-color: var(--accent); }
+#sidebar h1 { font-family: var(--serif); font-size: 22px; margin: 0; font-weight: 600; letter-spacing: .01em; }
+#sidebar .sub { color: var(--muted); font-size: 13px; margin: 2px 0 10px; }
+#tomeSel { width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-size: 14px; }
+.progress { margin-top: 10px; font-size: 12px; color: var(--muted); }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.bar span { display: block; height: 100%; width: 0; background: var(--ok); transition: width .3s; }
+#toc { overflow-y: auto; flex: 1; padding: 6px 0 20px; }
+#toc details { border-bottom: 1px solid var(--line); }
+#toc summary { list-style: none; cursor: pointer; padding: 10px 18px; font-size: 14px; display: flex; gap: 8px; align-items: baseline; }
+#toc summary::-webkit-details-marker { display: none; }
+#toc summary::before { content: "▸"; color: var(--muted); font-size: 11px; transition: transform .15s; }
+#toc details[open] summary::before { transform: rotate(90deg); }
+#toc summary .lt { flex: 1; }
+#toc summary .ln { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+#toc summary .cnt { font-size: 11px; color: var(--muted); white-space: nowrap; }
+#toc summary .cnt.done { color: var(--ok); font-weight: 600; }
+#toc ol { list-style: none; margin: 0; padding: 0 0 8px; }
+#toc li a { display: flex; gap: 8px; align-items: flex-start; padding: 5px 14px 5px 22px; font-size: 13.5px; color: var(--ink); text-decoration: none; line-height: 1.35; }
+#toc li a:hover { background: var(--hl-s); }
+#toc li a.cur { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+#toc li a.read .ct { color: var(--muted); }
+.chk { flex: none; width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--muted); display: inline-grid; place-items: center; font-size: 11px; color: transparent; margin-top: 1px; background: transparent; padding: 0; }
+.chk:hover { border-color: var(--ok); }
+a.read .chk { background: var(--ok); border-color: var(--ok); color: #fff; }
+.cn { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 2.2em; }
+#sidebar footer { border-top: 1px solid var(--line); padding: 10px 18px; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 12px; }
+#sidebar footer button { background: none; border: none; padding: 0; color: var(--accent); font-size: 12px; text-decoration: underline; }
+
+/* ---------- Main ---------- */
+#main { overflow-y: auto; min-height: 0; position: relative; }
+#topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); font-size: 13px; }
+#menuBtn { display: inline-block; background: none; border: 1px solid var(--line); border-radius: 6px; padding: 4px 9px; }
+#crumb { flex: 1; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tools { display: flex; gap: 6px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--paper); }
+.seg button { border: none; background: none; padding: 4px 10px; font-size: 12.5px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.on { background: var(--accent); color: #fff; }
+.tbtn { border: 1px solid var(--line); background: var(--paper); border-radius: 7px; padding: 4px 9px; font-size: 12.5px; }
+
+.wctl { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12.5px; }
+.wctl input { width: 90px; accent-color: var(--accent); }
+article { max-width: var(--maxw); margin: 0 auto; padding: 36px 60px 80px; background: var(--paper); min-height: calc(100% - 45px); box-shadow: 0 0 0 1px var(--line); }
+body.mode-side article { max-width: calc(var(--maxw) * 1.65); }
+.ch-head { text-align: center; margin-bottom: 36px; }
+.ch-head .lv { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.ch-head h2 { font-family: var(--serif); font-weight: 400; font-size: 15px; letter-spacing: .2em; text-transform: uppercase; margin: 18px 0 6px; color: var(--accent); }
+.ch-head h3 { font-family: var(--serif); font-size: calc(var(--fs) * 1.45); font-weight: 500; margin: 0; line-height: 1.25; }
+.ch-head .en { font-family: var(--serif); font-style: italic; color: var(--muted); margin-top: 6px; font-size: calc(var(--fs) * .85); }
+.ch-head .rd { margin-top: 14px; }
+.badge { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; border: 1px solid var(--line); border-radius: 20px; padding: 3px 11px; background: none; color: var(--muted); }
+.badge.on { border-color: var(--ok); color: var(--ok); }
+
+.para { position: relative; margin: 0 0 1em; }
+.para .fr { position: relative; font-family: var(--serif); font-size: var(--fs); line-height: 1.7; text-align: justify; hyphens: auto; -webkit-hyphens: auto; margin: 0; }
+.para .tr { display: none; font-family: var(--serif); font-size: calc(var(--fs) * .86); line-height: 1.6; color: var(--tr); font-style: italic; border-left: 3px solid var(--accent-soft); padding: 4px 0 4px 14px; margin: 6px 0 4px; }
+.para.show .tr, body.mode-para .para .tr { display: block; }
+body.mode-side .para { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; }
+body.mode-side .para .tr { display: block; margin: 0; border-left: 1px solid var(--line); padding: 0 0 0 20px; font-size: calc(var(--fs) * .86); line-height: 1.95; }
+.pt { position: absolute; left: -42px; top: 4px; border: 1px solid var(--line); background: var(--paper); color: var(--muted); font-size: 10px; letter-spacing: .05em; border-radius: 5px; padding: 2px 5px; opacity: 0; transition: opacity .15s; }
+.para:hover .pt, .para.show .pt { opacity: 1; }
+.para.show .pt { color: var(--accent); border-color: var(--accent); }
+body.mode-para .pt, body.mode-side .pt { display: none; }
+
+.w { cursor: pointer; border-radius: 3px; }
+.w:hover { background: var(--hl); }
+.w.sel { background: var(--accent); color: #fff; }
+.s.cur { background: var(--hl-s); border-radius: 3px; box-shadow: 0 0 0 2px var(--hl-s); }
+.tr .ts.cur { background: var(--hl-s); color: var(--ink); }
+em { font-style: italic; }
+
+.ch-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.nav { border: 1px solid var(--line); background: var(--paper); border-radius: 8px; padding: 9px 14px; font-size: 14px; max-width: 34%; text-align: left; }
+.nav small { display: block; color: var(--muted); font-size: 11px; }
+.nav:disabled { visibility: hidden; }
+.mark { border: none; background: var(--ok); color: #fff; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: 600; }
+.mark.on { background: none; color: var(--ok); border: 1.5px solid var(--ok); }
+.loading { text-align: center; color: var(--muted); padding: 80px 0; font-family: var(--serif); }
+.hint { font-size: 13px; color: var(--muted); text-align: center; margin: -18px 0 28px; }
+
+/* ---------- Panel ---------- */
+#panel { display: none; background: var(--paper); border-left: 1px solid var(--line); overflow-y: auto; min-height: 0; }
+body.panel-open #panel { display: block; }
+.ph { position: sticky; top: 0; background: var(--paper); border-bottom: 1px solid var(--line); padding: 14px 18px 12px; display: flex; align-items: flex-start; gap: 8px; z-index: 2; }
+.ph .hw { flex: 1; font-family: var(--serif); font-size: 26px; line-height: 1.15; word-break: break-word; }
+.ph .ipa { display: block; font-family: var(--sans); font-size: 13px; color: var(--muted); margin-top: 3px; }
+.icon { border: 1px solid var(--line); background: none; border-radius: 6px; width: 30px; height: 30px; display: inline-grid; place-items: center; font-size: 14px; flex: none; }
+.pb { padding: 6px 18px 30px; }
+.sec { margin-top: 16px; }
+.sec h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.sec h4 .flag { font-size: 10px; border-radius: 3px; padding: 1px 5px; background: var(--accent-soft); color: var(--accent); letter-spacing: .04em; }
+.ent { margin: 0 0 12px; }
+.ent .pos { font-size: 12.5px; color: var(--accent); font-style: italic; }
+.ent .lemma { font-size: 12.5px; color: var(--muted); }
+.ent .lemma a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+.ent ol { margin: 4px 0 0; padding-left: 20px; font-size: 14.5px; line-height: 1.45; }
+.ent ol li { margin-bottom: 3px; }
+.sub-ent { margin: 6px 0 0 0; padding: 8px 10px; border-radius: 7px; background: var(--hl-s); }
+.sub-ent .lw { font-family: var(--serif); font-size: 17px; font-weight: 600; }
+.none { color: var(--muted); font-size: 14px; font-style: italic; }
+.sent { border-radius: 8px; background: var(--hl-s); padding: 10px 12px; }
+.sent .sfr { font-family: var(--serif); font-size: 15.5px; line-height: 1.5; }
+.sent .sfr b { color: var(--accent); }
+.sent .sen { font-family: var(--serif); font-style: italic; color: var(--tr); font-size: 15px; line-height: 1.5; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.sent + .sent { margin-top: 8px; }
+.mt { font-size: 11px; color: var(--muted); margin-top: 8px; }
+.tabs { display: flex; gap: 4px; margin-top: 12px; }
+.tabs button { border: 1px solid var(--line); background: none; border-radius: 20px; padding: 3px 11px; font-size: 12px; }
+.tabs button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.scrim { display: none; }
+#offline { display: none; position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 50; background: var(--ink); color: var(--paper); border-radius: 20px; padding: 7px 16px; font-size: 13px; box-shadow: var(--shadow); white-space: nowrap; }
+
+/* ---------- Narrow screens ---------- */
+@media (max-width: 1100px) {
+  body.panel-open #app { grid-template-columns: 300px 1fr; }
+  body.panel-open #panel { position: fixed; right: 0; top: 0; bottom: 0; width: min(380px, 92vw); z-index: 30; box-shadow: var(--shadow); }
+  body.mode-side .para { grid-template-columns: 1fr; gap: 6px; }
+  body.mode-side .para .tr { border-left: 3px solid var(--accent-soft); padding: 4px 0 4px 14px; line-height: 1.6; }
+}
+@media (max-width: 820px) {
+  #app, body.panel-open #app { grid-template-columns: 1fr; }
+  #sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: min(320px, 88vw); z-index: 40; transform: translateX(-100%); transition: transform .2s; box-shadow: var(--shadow); }
+  body.side-open #sidebar { transform: none; }
+  body.side-open .scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 35; }
+  #menuBtn { display: inline-block; }
+  article { padding: 24px 30px 60px 16px; }
+  .pt { left: auto; right: 0; top: -18px; opacity: .8; }
+  body.panel-open #panel { top: auto; left: 0; width: 100%; height: 55vh; border-left: none; border-top: 1px solid var(--line); border-radius: 14px 14px 0 0; }
+  .tools .lbl, .wctl { display: none; }
+  #crumb { display: none; }
+}
+/* Full screen: the top bar fades out until hovered */
+body.fs #topbar { opacity: 0; transition: opacity .25s; }
+body.fs #topbar:hover, body.fs #topbar:focus-within { opacity: 1; }
+/* Sidebar hidden by the user (wide screens; narrow screens use the slide-over) */
+@media (min-width: 821px) {
+  body.side-hidden #sidebar { display: none; }
+  body.side-hidden #app { grid-template-columns: 1fr; }
+  body.side-hidden.panel-open #app { grid-template-columns: 1fr 380px; }
+}
+@media (min-width: 821px) and (max-width: 1100px) {
+  body.side-hidden.panel-open #app { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <header>
+      <button id="hideSide" title="Masquer la table des matières (Maj + S)" aria-label="Masquer la table des matières">«</button>
+      <h1>Les Misérables</h1>
+      <div class="sub">Victor Hugo · 1862</div>
+      <select id="tomeSel" aria-label="Tome"></select>
+      <div class="progress"><div class="bar"><span id="progBar"></span></div><span id="progTxt"></span></div>
+    </header>
+    <nav id="toc"></nav>
+    <footer>
+      <button id="exportBtn" title="Sauvegarder la progression dans un fichier">Exporter la progression</button>
+      <button id="importBtn" title="Restaurer la progression depuis un fichier">Importer</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+      <button id="aboutBtn">Sources</button>
+    </footer>
+  </aside>
+  <main id="main">
+    <div id="topbar">
+      <button id="menuBtn" aria-label="Table des matières" title="Afficher / masquer la table des matières">☰</button>
+      <span id="crumb"></span>
+      <div class="tools">
+        <span class="lbl" style="color:var(--muted)">Traduction</span>
+        <div class="seg" id="modeSeg">
+          <button data-mode="off" title="Cliquez EN à côté d'un paragraphe pour le traduire">Non</button>
+          <button data-mode="para" title="Traduction sous chaque paragraphe">Dessous</button>
+          <button data-mode="side" title="Texte et traduction côte à côte">Côte à côte</button>
+        </div>
+        <button class="tbtn" id="fsDown" title="Texte plus petit">A−</button>
+        <button class="tbtn" id="fsUp" title="Texte plus grand">A+</button>
+        <label class="wctl" title="Largeur du texte">↔<input type="range" id="widthRange" min="520" max="1600" step="20"></label>
+        <button class="tbtn" id="themeBtn" title="Thème clair / sombre">◐</button>
+        <button class="tbtn" id="fullBtn" title="Plein écran (F)">⛶</button>
+      </div>
+    </div>
+    <article id="chapter"><div class="loading">Chargement…</div></article>
+  </main>
+  <aside id="panel" aria-live="polite"></aside>
+</div>
+<div class="scrim" id="scrim"></div>
+<div id="offline" role="status"></div>
+
+<script src="data/tomes.js"></script>
+<script>
+(function () {
+  "use strict";
+  const TOMES = window.LM_TOMES || [];
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  // ---------- Storage (localStorage, with in-memory fallback) ----------
+  const mem = {};
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("lemiz." + k); return v == null ? d : JSON.parse(v); } catch (e) { return k in mem ? mem[k] : d; } },
+    set(k, v) { mem[k] = v; try { localStorage.setItem("lemiz." + k, JSON.stringify(v)); } catch (e) {} }
+  };
+  let readMap = store.get("read", {});
+  const settings = Object.assign({ fs: 20, w: 760, mode: "off", theme: "" }, store.get("settings", {}));
+  const saveSettings = () => store.set("settings", settings);
+
+  // ---------- Script loading (works from file://) ----------
+  const loaded = {};
+  function loadScript(src) {
+    if (!loaded[src]) loaded[src] = new Promise((res, rej) => {
+      const s = document.createElement("script");
+      s.src = src; s.onload = res; s.onerror = () => { delete loaded[src]; rej(new Error(src)); };
+      document.head.appendChild(s);
+    });
+    return loaded[src];
+  }
+  const chapters = {};
+  window.LM_CHAPTER = (key, data) => { chapters[key] = data; };
+  let DICT = null, IPA = {};
+  const dictReady = loadScript("data/dict.js").then(() => { DICT = window.LM_DICT.d; IPA = window.LM_DICT.i; }).catch(() => {});
+
+  // ---------- Flat chapter list ----------
+  const flat = [];
+  TOMES.forEach(t => t.livres.forEach((lv, li) => lv.chapters.forEach((ch, ci) => {
+    flat.push({ t, lv, ch, li, ci, key: `${t.id}/${li + 1}/${ci + 1}` });
+  })));
+  const byKey = Object.fromEntries(flat.map((c, i) => [c.key, i]));
+  let curIdx = -1;
+
+  // ---------- Settings UI ----------
+  function applySettings() {
+    document.documentElement.style.setProperty("--fs", settings.fs + "px");
+    document.documentElement.style.setProperty("--maxw", settings.w + "px");
+    document.body.classList.toggle("side-hidden", settings.side === false);
+    $("#widthRange").value = settings.w;
+    if (settings.theme) document.documentElement.dataset.theme = settings.theme;
+    else delete document.documentElement.dataset.theme;
+    document.body.classList.remove("mode-off", "mode-para", "mode-side");
+    document.body.classList.add("mode-" + settings.mode);
+    document.querySelectorAll("#modeSeg button").forEach(b => b.classList.toggle("on", b.dataset.mode === settings.mode));
+  }
+  $("#modeSeg").onclick = e => { const b = e.target.closest("button"); if (!b) return; settings.mode = b.dataset.mode; saveSettings(); applySettings(); };
+  $("#fsUp").onclick = () => { settings.fs = Math.min(48, settings.fs + (settings.fs >= 30 ? 2 : 1)); saveSettings(); applySettings(); };
+  $("#fsDown").onclick = () => { settings.fs = Math.max(14, settings.fs - (settings.fs > 30 ? 2 : 1)); saveSettings(); applySettings(); };
+  $("#widthRange").oninput = e => { settings.w = +e.target.value; saveSettings(); applySettings(); };
+  $("#themeBtn").onclick = () => {
+    const dark = settings.theme ? settings.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    settings.theme = dark ? "light" : "dark"; saveSettings(); applySettings();
+  };
+  function toggleSidebar() {
+    if (matchMedia("(max-width: 820px)").matches) document.body.classList.toggle("side-open");
+    else { settings.side = !document.body.classList.toggle("side-hidden"); saveSettings(); }
+  }
+  $("#menuBtn").onclick = toggleSidebar;
+  $("#hideSide").onclick = toggleSidebar;
+
+  // ---------- Full screen ----------
+  const root = document.documentElement;
+  const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+  function toggleFullscreen() {
+    const r = fsElement() ? (document.exitFullscreen || document.webkitExitFullscreen).call(document)
+                          : (root.requestFullscreen || root.webkitRequestFullscreen).call(root);
+    if (r && r.catch) r.catch(() => {});
+  }
+  function onFsChange() {
+    const on = !!fsElement();
+    document.body.classList.toggle("fs", on);
+    $("#fullBtn").textContent = on ? "✕" : "⛶";
+    $("#fullBtn").title = on ? "Quitter le plein écran (F)" : "Plein écran (F)";
+    // hide the table of contents while in full screen; restore the saved choice afterwards
+    if (on) document.body.classList.add("side-hidden"); else applySettings();
+  }
+  if (!(root.requestFullscreen || root.webkitRequestFullscreen)) $("#fullBtn").style.display = "none";
+  $("#fullBtn").onclick = toggleFullscreen;
+  document.addEventListener("fullscreenchange", onFsChange);
+  document.addEventListener("webkitfullscreenchange", onFsChange);
+  $("#scrim").onclick = () => document.body.classList.remove("side-open");
+
+  // ---------- Table of contents ----------
+  TOMES.forEach(t => { const o = document.createElement("option"); o.value = t.id; o.textContent = t.title; $("#tomeSel").appendChild(o); });
+  $("#tomeSel").onchange = e => {
+    const t = TOMES.find(t => t.id === e.target.value);
+    const first = flat.find(c => c.t === t && !readMap[c.key]) || flat.find(c => c.t === t);
+    location.hash = "#/" + first.key;
+  };
+  let tocTome = null;
+  function renderToc(t) {
+    tocTome = t;
+    $("#toc").innerHTML = t.livres.map((lv, li) => `
+      <details data-li="${li}">
+        <summary><span class="lt"><span class="ln">${esc(lv.num)}</span>${renderTitle(lv.title)}</span><span class="cnt"></span></summary>
+        <ol>${lv.chapters.map((ch, ci) => {
+          const key = `${t.id}/${li + 1}/${ci + 1}`;
+          return `<li><a href="#/${key}" data-key="${key}"><button class="chk" data-key="${key}" title="Marquer comme lu">✓</button><span class="cn">${ch.num}.</span><span class="ct">${renderTitle(ch.title)}</span></a></li>`;
+        }).join("")}</ol>
+      </details>`).join("");
+    updateToc();
+  }
+  function updateToc() {
+    const t = tocTome; if (!t) return;
+    document.querySelectorAll("#toc a[data-key]").forEach(a => {
+      a.classList.toggle("read", !!readMap[a.dataset.key]);
+      a.classList.toggle("cur", curIdx >= 0 && a.dataset.key === flat[curIdx].key);
+    });
+    let total = 0, done = 0;
+    t.livres.forEach((lv, li) => {
+      const n = lv.chapters.length;
+      const r = lv.chapters.filter((_, ci) => readMap[`${t.id}/${li + 1}/${ci + 1}`]).length;
+      total += n; done += r;
+      const c = $(`#toc details[data-li="${li}"] .cnt`);
+      c.textContent = `${r}/${n}`; c.classList.toggle("done", r === n);
+    });
+    $("#progBar").style.width = (100 * done / total) + "%";
+    $("#progTxt").textContent = `${done} / ${total} chapitres lus`;
+  }
+  $("#toc").addEventListener("click", e => {
+    const c = e.target.closest(".chk");
+    if (c) { e.preventDefault(); e.stopPropagation(); toggleRead(c.dataset.key); return; }
+    if (e.target.closest("a")) document.body.classList.remove("side-open");
+  });
+  function toggleRead(key, force) {
+    const on = force === undefined ? !readMap[key] : force;
+    if (on) readMap[key] = Date.now(); else delete readMap[key];
+    store.set("read", readMap);
+    updateToc(); updateReadButtons();
+  }
+  function updateReadButtons() {
+    if (curIdx < 0) return;
+    const on = !!readMap[flat[curIdx].key];
+    document.querySelectorAll(".mark").forEach(b => { b.classList.toggle("on", on); b.textContent = on ? "✓ Lu — marquer comme non lu" : "Marquer comme lu"; });
+    document.querySelectorAll(".badge").forEach(b => { b.classList.toggle("on", on); b.textContent = on ? "✓ Lu" : "○ Non lu"; });
+  }
+
+  // ---------- Rendering text ----------
+  const LET = "A-Za-zÀ-ÖØ-öø-ÿŒœÆæ";
+  const WORD = new RegExp(`[${LET}]+(?:['’-][${LET}]+)*`, "g");
+  const ELI = new RegExp(`^(l|d|j|m|t|s|c|n|qu|jusqu|lorsqu|puisqu|quoiqu)['’](?=[${LET}])`, "i");
+  function wordSpans(w) {
+    const m = w.match(ELI);
+    if (m) return `<span class="w">${esc(m[0])}</span>` + wordSpans(w.slice(m[0].length));
+    return `<span class="w">${esc(w)}</span>`;
+  }
+  // Approximate page numbers: one page per PAGE characters of the tome (no printed edition is followed).
+  const PAGE = 1500;
+  function renderSentence(s) {
+    let out = "", last = 0, m;
+    WORD.lastIndex = 0;
+    while ((m = WORD.exec(s))) { out += esc(s.slice(last, m.index)) + wordSpans(m[0]); last = m.index + m[0].length; }
+    out += esc(s.slice(last));
+    return out.replace(/_([^_]+)_/g, "<em>$1</em>").replace(/_/g, "");
+  }
+  const plain = s => s.replace(/_/g, "");
+  const renderTitle = s => esc(s).replace(/_([^_]+)_/g, "<em>$1</em>").replace(/_/g, "");
+
+  async function show(idx) {
+    curIdx = idx;
+    const c = flat[idx];
+    if (tocTome !== c.t) { renderToc(c.t); $("#tomeSel").value = c.t.id; }
+    const det = $(`#toc details[data-li="${c.li}"]`); if (det) det.open = true;
+    updateToc();
+    const a = $(`#toc a[data-key="${c.key}"]`); if (a) a.scrollIntoView({ block: "nearest" });
+    store.set("last", c.key);
+    $("#crumb").textContent = `${c.t.title} · ${c.lv.num} — ${plain(c.lv.title)} · Chapitre ${c.ch.num}`;
+    const art = $("#chapter");
+    if (!chapters[c.key]) {
+      art.innerHTML = '<div class="loading">Chargement…</div>';
+      try { await loadScript(c.ch.file); } catch (e) { art.innerHTML = '<div class="loading">Impossible de charger ce chapitre.</div>'; return; }
+      if (curIdx !== idx) return;
+    }
+    const d = chapters[c.key];
+    const prev = flat[idx - 1], next = flat[idx + 1];
+    const start = c.ch.start || 0;
+    const p1 = Math.floor(start / PAGE) + 1, p2 = Math.floor((start + (c.ch.len || 1) - 1) / PAGE) + 1;
+    art.innerHTML = `
+      <div class="ch-head">
+        <div class="lv">${esc(c.t.title)} · ${esc(c.lv.num)} — ${renderTitle(c.lv.title)}</div>
+        <h2>Chapitre ${c.ch.num}</h2>
+        <h3>${renderSentence(c.ch.title)}</h3>
+        <div class="lv" style="margin-top:10px;letter-spacing:.04em;text-transform:none">${p1 === p2 ? `page ${p1}` : `pages ${p1}–${p2}`}</div>
+        <div class="rd"><button class="badge" data-act="read"></button></div>
+      </div>
+      ${d.fr.map((p, pi) => `
+        <div class="para" data-p="${pi}">
+          <button class="pt" data-act="ptr" title="Traduire ce paragraphe">EN</button>
+          <p class="fr">${p.map((s, si) => `<span class="s" data-s="${pi}.${si}">${renderSentence(s)}</span>`).join(" ")}</p>
+          <div class="tr">${d.en[pi].map((s, si) => `<span class="ts" data-s="${pi}.${si}">${esc(s)}</span>`).join(" ")}</div>
+        </div>`).join("")}
+      <div class="ch-foot">
+        <button class="nav" data-act="prev" ${prev ? "" : "disabled"}><small>← Précédent</small>${prev ? renderTitle(prev.ch.title) : ""}</button>
+        <button class="mark" data-act="read"></button>
+        <button class="nav" data-act="next" ${next ? "" : "disabled"} style="text-align:right"><small>Suivant →</small>${next ? renderTitle(next.ch.title) : ""}</button>
+      </div>`;
+    updateReadButtons();
+    $("#main").scrollTop = 0;
+    blankPanel();
+  }
+
+  function route() {
+    const key = location.hash.replace(/^#\/?/, "");
+    let idx = byKey[key];
+    if (idx === undefined) {
+      const last = store.get("last", null);
+      idx = byKey[last] !== undefined ? byKey[last] : 0;
+      history.replaceState(null, "", "#/" + flat[idx].key);
+    }
+    if (flat.length) show(idx);
+  }
+  window.addEventListener("hashchange", route);
+  const go = i => { if (flat[i]) location.hash = "#/" + flat[i].key; };
+
+  // ---------- Article interactions ----------
+  const art = $("#chapter");
+  art.addEventListener("click", e => {
+    const act = e.target.closest("[data-act]");
+    if (act) {
+      const a = act.dataset.act;
+      if (a === "read") toggleRead(flat[curIdx].key);
+      else if (a === "prev") go(curIdx - 1);
+      else if (a === "next") go(curIdx + 1);
+      else if (a === "ptr") act.closest(".para").classList.toggle("show");
+      return;
+    }
+    const sel = window.getSelection();
+    if (sel && !sel.isCollapsed && sel.toString().trim().length > 1) return;
+    const w = e.target.closest(".w");
+    if (w) { selectWord(w); return; }
+    const ts = e.target.closest(".tr .ts");
+    if (ts) { const s = art.querySelector(`.s[data-s="${ts.dataset.s}"]`); if (s) showSentences([s], null); return; }
+    blankPanel(); // click on empty space or punctuation
+  });
+  $("#main").addEventListener("click", e => { if (!e.target.closest("#chapter, #topbar")) blankPanel(); });
+  art.addEventListener("mouseup", () => {
+    setTimeout(() => {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed) return;
+      const text = sel.toString().trim();
+      if (text.length < 2) return;
+      const range = sel.getRangeAt(0);
+      const sents = [...art.querySelectorAll(".fr .s")].filter(s => range.intersectsNode(s));
+      if (!sents.length) return;
+      if (sents.length === 1 && !/\s/.test(text)) {
+        const w = [...sents[0].querySelectorAll(".w")].find(w => range.intersectsNode(w));
+        if (w) { selectWord(w); return; }
+      }
+      showSentences(sents, text);
+    }, 0);
+  });
+
+  function clearMarks() {
+    art.querySelectorAll(".w.sel, .s.cur, .ts.cur").forEach(el => el.classList.remove("sel", "cur"));
+  }
+  function markSentences(sents) {
+    sents.forEach(s => {
+      s.classList.add("cur");
+      const t = art.querySelector(`.ts[data-s="${s.dataset.s}"]`); if (t) t.classList.add("cur");
+    });
+  }
+  function sentEn(s) {
+    const [pi, si] = s.dataset.s.split(".").map(Number);
+    return chapters[flat[curIdx].key].en[pi][si];
+  }
+  function sentFr(s) {
+    const [pi, si] = s.dataset.s.split(".").map(Number);
+    return plain(chapters[flat[curIdx].key].fr[pi][si]);
+  }
+
+  // ---------- Dictionary lookup ----------
+  const ELI_MAP = { l: ["le", "la"], d: ["de"], j: ["je"], m: ["me"], t: ["te"], s: ["se", "si"], c: ["ce"], n: ["ne"],
+    qu: ["que"], jusqu: ["jusque"], lorsqu: ["lorsque"], puisqu: ["puisque"], quoiqu: ["quoique"] };
+  const POS = { noun: "nom", verb: "verbe", adj: "adjectif", adv: "adverbe", pron: "pronom", prep: "préposition", conj: "conjonction",
+    article: "article", det: "déterminant", intj: "interjection", name: "nom propre", num: "numéral", particle: "particule",
+    phrase: "locution", prep_phrase: "locution prépositive", contraction: "contraction", suffix: "suffixe", prefix: "préfixe" };
+  const GEN = { m: "masc.", f: "fém.", mf: "masc. & fém." };
+  function entries(w) {
+    if (!DICT) return null;
+    const n = w.replace(/’/g, "'");
+    return DICT[n] || DICT[n.toLowerCase()] || DICT[n.charAt(0).toUpperCase() + n.slice(1).toLowerCase()] || null;
+  }
+  function lookup(raw) {
+    const w = raw.replace(/’/g, "'");
+    const groups = []; // {word, entries, note}
+    const e = entries(w);
+    const m = w.match(/^([a-zA-Z]+)'$/);
+    if (e) groups.push({ word: w, entries: e });
+    else if (m && ELI_MAP[m[1].toLowerCase()]) {
+      ELI_MAP[m[1].toLowerCase()].forEach(x => { const ee = entries(x); if (ee) groups.push({ word: x, entries: ee, note: `élision de « ${x} »` }); });
+    } else if (/-/.test(w)) {
+      w.split("-").filter(p => p && p.toLowerCase() !== "t").forEach(p => { const ee = entries(p); if (ee) groups.push({ word: p, entries: ee }); });
+    }
+    return groups;
+  }
+  function renderEntryList(list, src) {
+    return list.filter(e => e[0] === src).map(e => `
+      <div class="ent">
+        <span class="pos">${esc(POS[e[1]] || e[1])}${e[2] ? " · " + GEN[e[2]] : ""}</span>
+        ${e[4] ? `<span class="lemma"> — forme de <a data-look="${esc(e[4])}">${esc(e[4])}</a></span>` : ""}
+        <ol>${e[3].map(g => `<li>${esc(g)}</li>`).join("")}</ol>
+      </div>`).join("");
+  }
+  function renderGroup(g, src, shown) {
+    let html = renderEntryList(g.entries, src);
+    const lemmas = [...new Set(g.entries.map(e => e[4]).filter(l => l && l !== g.word && !shown.has(l)))];
+    lemmas.forEach(l => {
+      const le = (entries(l) || []).filter(e => !e[4] || e[4] === l);
+      const body = renderEntryList(le, src);
+      if (body) html += `<div class="sub-ent"><div class="lw">${esc(l)}${IPA[l] ? ` <span class="lemma">/${esc(IPA[l])}/</span>` : ""}</div>${body}</div>`;
+    });
+    return html;
+  }
+
+  let panelSrc = "both", lastLook = null;
+  function selectWord(w) {
+    clearMarks();
+    w.classList.add("sel");
+    const s = w.closest(".s");
+    if (s) markSentences([s]);
+    lookWord(w.textContent, s, w);
+  }
+  async function lookWord(word, s, wEl) {
+    lastLook = { word, s, wEl };
+    if (!DICT) { openPanel(`<div class="ph"><div class="hw">${esc(word)}</div>${closeBtn()}</div><div class="pb"><p class="none">Chargement du dictionnaire…</p></div>`); await dictReady; }
+    const groups = lookup(word);
+    const ipa = IPA[word] || IPA[word.toLowerCase()] || "";
+    const hasE = groups.some(g => g.entries.some(e => e[0] === "e") || g.entries.some(e => e[4] && (entries(e[4]) || []).some(x => x[0] === "e")));
+    const hasF = groups.some(g => g.entries.some(e => e[0] === "f") || g.entries.some(e => e[4] && (entries(e[4]) || []).some(x => x[0] === "f")));
+    let body = "";
+    const sec = (src, label, flag) => {
+      const shown = new Set(groups.map(g => g.word));
+      const inner = groups.map(g => {
+        const r = renderGroup(g, src, shown);
+        if (!r) return "";
+        const head = (groups.length > 1 || g.word.toLowerCase() !== word.toLowerCase().replace(/’/g, "'")) ? `<div class="lw" style="font-family:var(--serif);font-size:17px;font-weight:600;margin:6px 0 2px">${esc(g.word)}${g.note ? ` <span class="lemma">(${esc(g.note)})</span>` : ""}</div>` : "";
+        return head + r;
+      }).join("");
+      return inner ? `<div class="sec"><h4><span class="flag">${flag}</span>${label}</h4>${inner}</div>` : "";
+    };
+    if (!groups.length) body += `<p class="none">Aucune entrée dans le dictionnaire${/^[A-ZÀ-Ý]/.test(word) ? " — probablement un nom propre" : ""}.</p>`;
+    else {
+      body += `<div class="tabs">
+        <button data-src="both" class="${panelSrc === "both" ? "on" : ""}">Les deux</button>
+        <button data-src="e" class="${panelSrc === "e" ? "on" : ""}" ${hasE ? "" : "disabled"}>English</button>
+        <button data-src="f" class="${panelSrc === "f" ? "on" : ""}" ${hasF ? "" : "disabled"}>Français</button></div>`;
+      if (panelSrc !== "f") body += sec("e", "Définition en anglais", "EN");
+      if (panelSrc !== "e") body += sec("f", "Définition en français", "FR");
+    }
+    if (s) body += sentenceBlock([s], wEl);
+    openPanel(`
+      <div class="ph"><div class="hw">${esc(word)}${ipa ? `<span class="ipa">/${esc(ipa)}/</span>` : ""}</div>
+        ${speakBtn(word)}${closeBtn()}</div>
+      <div class="pb">${body}</div>`);
+  }
+  function sentenceBlock(sents, wEl) {
+    const fr = sents.map(s => {
+      if (!wEl) return esc(sentFr(s));
+      // bold the clicked word within the sentence
+      return [...s.childNodes].map(n => n === wEl ? `<b>${esc(n.textContent)}</b>` : esc(n.textContent)).join("");
+    }).join(" ");
+    const en = sents.map(sentEn).join(" ");
+    const frPlain = sents.map(sentFr).join(" ");
+    return `<div class="sec"><h4>${sents.length > 1 ? "Passage" : "Phrase"} ${speakBtn(frPlain, true)}</h4>
+      <div class="sent"><div class="sfr">${fr}</div><div class="sen">${esc(en)}</div></div>
+      <div class="mt">Traduction automatique (hors ligne).</div></div>`;
+  }
+  function showSentences(sents, sel) {
+    clearMarks(); markSentences(sents);
+    openPanel(`<div class="ph"><div class="hw" style="font-size:20px">Traduction${sents.length > 1 ? ` · ${sents.length} phrases` : ""}</div>${closeBtn()}</div>
+      <div class="pb">${sentenceBlock(sents, null)}</div>`);
+  }
+  const closeBtn = () => `<button class="icon" data-pact="close" title="Fermer (Échap)">✕</button>`;
+  const canSpeak = "speechSynthesis" in window;
+  const speakBtn = (text, small) => canSpeak ? `<button class="icon" data-say="${esc(text)}" title="Écouter" ${small ? 'style="width:24px;height:24px;font-size:12px"' : ""}>🔊</button>` : "";
+  let frVoice = null;
+  function pickVoice() { if (!canSpeak) return; const vs = speechSynthesis.getVoices().filter(v => /^fr/i.test(v.lang)); frVoice = vs.find(v => /fr-FR/i.test(v.lang) && v.localService) || vs.find(v => /fr-FR/i.test(v.lang)) || vs[0] || null; }
+  if (canSpeak) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  function say(text) {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text); u.lang = "fr-FR"; if (frVoice) u.voice = frVoice; u.rate = .9;
+    speechSynthesis.speak(u);
+  }
+
+  const panel = $("#panel");
+  function openPanel(html) {
+    if (settings.panel === false) { settings.panel = true; saveSettings(); }
+    panel.innerHTML = html; document.body.classList.add("panel-open"); panel.scrollTop = 0; }
+  function closePanel() { document.body.classList.remove("panel-open"); clearMarks(); if (canSpeak) speechSynthesis.cancel(); }
+  // On wide screens the panel stays open (empty) so the text doesn't shift; on narrow screens it overlays and just closes.
+  const overlay = () => matchMedia("(max-width: 1100px)").matches;
+  function blankPanel() {
+    lastLook = null;
+    if (overlay() || (!document.body.classList.contains("panel-open") && settings.panel === false)) { closePanel(); return; }
+    clearMarks(); if (canSpeak) speechSynthesis.cancel();
+    openPanel("");
+  }
+  function hidePanel() { settings.panel = false; saveSettings(); closePanel(); }
+  panel.addEventListener("click", e => {
+    const t = e.target.closest("[data-pact],[data-say],[data-look],[data-src]");
+    if (!t) return;
+    if (t.dataset.pact === "close") hidePanel();
+    else if (t.dataset.say) say(t.dataset.say);
+    else if (t.dataset.look) lookWord(t.dataset.look, lastLook && lastLook.s, null);
+    else if (t.dataset.src) { panelSrc = t.dataset.src; if (lastLook) lookWord(lastLook.word, lastLook.s, lastLook.wEl); }
+  });
+
+  document.addEventListener("keydown", e => {
+    if ((e.target.closest && e.target.closest("input,select,textarea")) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === "Escape") blankPanel();
+    else if (e.key === "S" && e.shiftKey) toggleSidebar();
+    else if (e.key === "f" || e.key === "F") toggleFullscreen();
+    else if (e.key === "ArrowRight" && e.shiftKey) go(curIdx + 1);
+    else if (e.key === "ArrowLeft" && e.shiftKey) go(curIdx - 1);
+  });
+
+  // ---------- Export / import progress ----------
+  $("#exportBtn").onclick = () => {
+    const blob = new Blob([JSON.stringify({ read: readMap, last: store.get("last", null), settings }, null, 1)], { type: "application/json" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "lemiz-progression.json"; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  $("#importBtn").onclick = () => $("#importFile").click();
+  $("#importFile").onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const d = JSON.parse(await f.text());
+      readMap = Object.assign({}, readMap, d.read || {}); store.set("read", readMap);
+      updateToc(); updateReadButtons();
+    } catch (err) { openPanel(`<div class="ph"><div class="hw">Import</div>${closeBtn()}</div><div class="pb"><p class="none">Fichier invalide.</p></div>`); }
+    e.target.value = "";
+  };
+  $("#aboutBtn").onclick = () => openPanel(`
+    <div class="ph"><div class="hw" style="font-size:22px">Sources</div>${closeBtn()}</div>
+    <div class="pb" style="font-size:14px;line-height:1.55">
+      <div class="sec"><h4>Texte</h4>Victor Hugo, <i>Les Misérables</i> (1862), domaine public. Texte établi par ebooksgratuits.com, distribué par le Projet Gutenberg.</div>
+      <div class="sec"><h4>Traduction</h4>Traduction anglaise automatique générée hors ligne (modèle Opus-MT, Helsinki-NLP). Elle aide à comprendre, mais elle n'est pas toujours exacte.</div>
+      <div class="sec"><h4>Dictionnaire</h4>Définitions tirées du Wiktionnaire (fr.wiktionary.org) et du Wiktionary anglais (en.wiktionary.org), via kaikki.org. Licence CC BY-SA.</div>
+      <div class="sec"><h4>Raccourcis</h4>Maj + → / ← : chapitre suivant / précédent<br>Maj + S : afficher / masquer la table des matières<br>F : plein écran<br>Échap : fermer ce panneau</div>
+      <div class="sec"><h4>Progression</h4>Les chapitres lus sont enregistrés dans ce navigateur. Utilisez « Exporter » pour les sauvegarder ou les transférer.</div>
+    </div>`);
+
+  // ---------- Offline download (the service worker caches whatever is fetched) ----------
+  async function setupOffline() {
+    if (!("serviceWorker" in navigator) || !window.caches || !/^https:|^http:\/\/localhost/.test(location.href)) return;
+    const sw = navigator.serviceWorker;
+    await sw.register("sw.js");
+    await sw.ready;
+    if (!sw.controller) await Promise.race([
+      new Promise(res => sw.addEventListener("controllerchange", res, { once: true })),
+      new Promise(res => setTimeout(res, 5000))
+    ]);
+    if (!sw.controller) return;
+    if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+    const files = ["data/dict.js", ...flat.map(c => c.ch.file)];
+    const hits = await Promise.all(files.map(f => caches.match(f)));
+    const missing = files.filter((f, i) => !hits[i]);
+    if (!missing.length) return;
+    const box = $("#offline");
+    box.style.display = "block";
+    let done = 0, failed = 0, next = 0;
+    const update = () => { box.textContent = `Téléchargement pour la lecture hors ligne… ${done} / ${missing.length}`; };
+    update();
+    const worker = async () => {
+      while (next < missing.length) {
+        const f = missing[next++];
+        try { if (!(await fetch(f)).ok) failed++; } catch (e) { failed++; }
+        done++; update();
+      }
+    };
+    await Promise.all(Array.from({ length: 6 }, worker));
+    box.textContent = failed ? `Téléchargement incomplet (${failed} fichiers). Rouvrez l'application avec Internet.` : "Prêt pour la lecture hors ligne ✓";
+    setTimeout(() => { box.style.display = "none"; }, failed ? 8000 : 4000);
+  }
+
+  applySettings();
+  if (!flat.length) { art.innerHTML = '<div class="loading">Données introuvables (data/tomes.js).</div>'; return; }
+  route();
+  setupOffline().catch(() => {});
+})();
+</script>
+</body>
+</html>
